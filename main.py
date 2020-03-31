@@ -45,6 +45,7 @@ def post_patient(rq: PatientDictRq):
 	app.counter += 1
 	return PatientDictResp(id=N, patient=rq.dict())
 
+
 @app.get("/patient/{pk}", response_model=PatientDictRq)
 def get_patient_info(pk: int):
 	if pk <= app.counter:
