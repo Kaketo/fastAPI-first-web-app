@@ -4,6 +4,9 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 app = FastAPI()
+app.counter = 0
+app.patients = list()
+
 
 @app.get("/")
 def root():
@@ -34,20 +37,17 @@ class PatientDictResp(BaseModel):
 	id: int
 	patient: PatientDictRq
 
-class PatientDatabase(BaseModel):
-	patients_dict: Dict
-
-patients = PatientDatabase(patients_dict={})
 
 @app.post("/patient", response_model=PatientDictResp)
 def post_patient(rq: PatientDictRq):
-	N = len(patients.patients_dict) + 1
-	patients.patients_dict[N] = rq
+	app.patients.append(rq)
+	N = app.counter + 1
+	app.counter += 1
 	return PatientDictResp(id=N, patient=rq.dict())
 
 @app.get("/patient/{pk}", response_model=PatientDictRq)
 def get_patient_info(pk: int):
-	if pk in patients.patients_dict.keys():
-		return patients.patients_dict.get(pk)
+	if pk <= app.counter:
+		return app.patients[pk-1]
 	else:
 		return JSONResponse(status_code=204, content={})
