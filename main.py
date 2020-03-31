@@ -5,6 +5,8 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
+patients = PatientDatabase(patients_dict={})
+
 @app.get("/")
 def root():
 	return{"message": "Hello World during the coronavirus pandemic!"}
@@ -37,8 +39,6 @@ class PatientDictResp(BaseModel):
 class PatientDatabase(BaseModel):
 	patients_dict: Dict
 
-patients = PatientDatabase(patients_dict={})
-
 @app.post("/patient", response_model=PatientDictResp)
 def post_patient(rq: PatientDictRq):
 	N = len(patients.patients_dict) + 1
@@ -50,4 +50,4 @@ def get_patient_info(pk: int):
 	if pk in patients.patients_dict.keys():
 		return patients.patients_dict.get(pk)
 	else:
-		return JSONResponse(status_code=404)
+		return JSONResponse(status_code=204, content={})
