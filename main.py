@@ -11,24 +11,24 @@ def root():
 
 @app.get("/method")
 def read_method():
-	return{"message": 'GET'}
+	return{"method": 'GET'}
 
 @app.post("/method")
 def read_method():
-	return{"message": 'POST'}
+	return{"method": 'POST'}
 
 @app.put("/method")
 def read_method():
-	return{"message": 'PUT'}
+	return{"method": 'PUT'}
 
 @app.delete("/method")
 def read_method():
-	return{"message": 'DELETE'}
+	return{"method": 'DELETE'}
 
 
 class PatientDictRq(BaseModel):
 	name: str
-	surname: str
+	surename: str
 
 class PatientDictResp(BaseModel):
 	id: int
