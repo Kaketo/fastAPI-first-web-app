@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 import pytest
 from main import app
+from base64 import b64encode
 
 client = TestClient(app)
 
@@ -59,3 +60,14 @@ def test_get_patient():
 		response = client.get(f"/patient/{i}")
 		assert response.json() == {}
 		assert response.status_code == 204
+
+
+def test_login():
+	username = 'trudnY'
+	password = 'PaC13Nt'
+	credentials = b64encode(b"trudnY:PaC13Nt").decode('utf-8')
+	response = client.post("/login", headers={"Authorization": f"Basic {credentials}"})
+
+	assert response.json() == {"message" : "Welcome"}
+	assert response.status_code in (301, 302, 303, 307)
+	
