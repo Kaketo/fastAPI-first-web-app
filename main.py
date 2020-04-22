@@ -1,14 +1,18 @@
 from typing import Dict, List
-from fastapi import FastAPI, Response, Cookie, HTTPException, Depends, status
+from fastapi import FastAPI,Request, Response, Cookie, HTTPException, Depends, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.responses import JSONResponse
+from fastapi.templating import Jinja2Templates
+
 from pydantic import BaseModel
 from hashlib import sha256
+
 import secrets
 
 
 app = FastAPI()
 security = HTTPBasic()
+templates = Jinja2Templates(directory="templates")
 
 app.counter = 0
 app.patients = list()
@@ -27,8 +31,12 @@ def root():
 	return{"message": "Hello World during the coronavirus pandemic!"}
 
 @app.get("/welcome")
-def welcome():
-	return{"message" : "Welcome"}
+def welcome(request: Request, response : Response, session_token: str = Depends(check_session)):
+	if session_token is None:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return "Log in to access."
+	username = app.sessions[session_token]
+	return templates.TemplateResponse("item.html", {"request": request, "user": username})
 
 @app.get("/method")
 def read_method():
@@ -85,14 +93,20 @@ class PatientDictResp(BaseModel):
 
 
 @app.post("/patient", response_model=PatientDictResp)
-def post_patient(rq: PatientDictRq):
+def post_patient(rq: PatientDictRq, session_token: str = Depends(check_session)):
+	if session_token is None:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return "Log in to access."
 	app.patients.append(rq)
 	N = app.counter + 1
 	app.counter += 1
 	return PatientDictResp(id=N, patient=rq.dict())
 
-@app.get("/patient/{pk}", response_model=PatientDictRq)
-def get_patient_info(pk: int):
+@app.get("/patient/{pk}", response_model=PatientDictRq,)
+def get_patient_info(pk: int, session_token: str = Depends(check_session)):
+	if session_token is None:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return "Log in to access."
 	if pk <= app.counter:
 		return app.patients[pk-1]
 	else:
