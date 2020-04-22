@@ -15,6 +15,12 @@ app.patients = list()
 
 app.secret_key = "LPYGCwTTEXBzhjLp86TRAYQBvXa5fAEf249YxC9RAfS7YSj2rHUdf6W4S7jzN4yw"
 app.users = {"trudnY":"PaC13Nt"}
+app.sessions={}
+
+def check_session(session_token: str = Cookie(None)):
+    if session_token not in app.sessions:
+        session_token = None
+    return session_token
 
 @app.get("/")
 def root():
@@ -41,7 +47,7 @@ def read_method():
 	return{"method": 'DELETE'}
 
 @app.post("/login")
-def create_session(response: Response, credentials:  HTTPBasicCredentials = Depends(security)):
+def login(response: Response, credentials:  HTTPBasicCredentials = Depends(security)):
     correct_username = secrets.compare_digest(credentials.username, "trudnY")
     correct_password = secrets.compare_digest(credentials.password, "PaC13Nt")
 
@@ -53,12 +59,21 @@ def create_session(response: Response, credentials:  HTTPBasicCredentials = Depe
         )
 
     session_token = sha256(bytes(f"{credentials.username}{credentials.password}{app.secret_key}" , encoding='utf8')).hexdigest()
+    app.sessions[session_token]=credentials.username
     response.set_cookie(key="session_token", value=session_token)
     response.status_code = status.HTTP_302_FOUND
     response.headers["Location"] = "/welcome"
 
 
 
+@app.post("/logout")
+def logout(response: Response, session_token: str = Depends(check_session)):
+	if session_token is None:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return "Log in to access."
+	response.status_code = status.HTTP_302_FOUND
+	response.headers['Location'] = "/"
+	app.sessions.pop(session_token)
 
 class PatientDictRq(BaseModel):
 	name: str
