@@ -9,7 +9,10 @@ def test_root():
 	assert response.status_code == 200
 	assert response.json() == {"message": "Hello World during the coronavirus pandemic!"}
 
-
+def test_welcome():
+	response = client.get("/welcome")
+	assert response.status_code != 404
+	assert response.json() == {"message" : "Welcome"}
 
 def test_print_method_get():
 	response = client.get("/method")

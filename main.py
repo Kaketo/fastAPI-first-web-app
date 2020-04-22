@@ -12,6 +12,10 @@ app.patients = list()
 def root():
 	return{"message": "Hello World during the coronavirus pandemic!"}
 
+@app.get("/welcome")
+def welcome():
+	return{"message" : "Welcome"}
+
 @app.get("/method")
 def read_method():
 	return{"method": 'GET'}
