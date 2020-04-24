@@ -15,7 +15,7 @@ security = HTTPBasic()
 templates = Jinja2Templates(directory="templates")
 
 app.counter = 0
-app.patients = list()
+app.patients = dict()
 
 app.secret_key = "LPYGCwTTEXBzhjLp86TRAYQBvXa5fAEf249YxC9RAfS7YSj2rHUdf6W4S7jzN4yw"
 app.users = {"trudnY":"PaC13Nt"}
@@ -38,21 +38,6 @@ def welcome(request: Request, response : Response, session_token: str = Depends(
 	username = app.sessions[session_token]
 	return templates.TemplateResponse("item.html", {"request": request, "user": username})
 
-@app.get("/method")
-def read_method():
-	return{"method": 'GET'}
-
-@app.post("/method")
-def read_method():
-	return{"method": 'POST'}
-
-@app.put("/method")
-def read_method():
-	return{"method": 'PUT'}
-
-@app.delete("/method")
-def read_method():
-	return{"method": 'DELETE'}
 
 @app.post("/login")
 def login(response: Response, credentials:  HTTPBasicCredentials = Depends(security)):
@@ -85,29 +70,43 @@ def logout(response: Response, session_token: str = Depends(check_session)):
 
 class PatientDictRq(BaseModel):
 	name: str
-	surename: str
+	surname: str
 
 class PatientDictResp(BaseModel):
 	id: int
 	patient: PatientDictRq
 
 
-@app.post("/patient", response_model=PatientDictResp)
-def post_patient(rq: PatientDictRq, session_token: str = Depends(check_session)):
+@app.post("/patient")
+def post_patient(response: Response, rq: PatientDictRq, session_token: str = Depends(check_session)):
 	if session_token is None:
 		response.status_code = status.HTTP_401_UNAUTHORIZED
 		return "Log in to access."
-	app.patients.append(rq)
-	N = app.counter + 1
+	app.patients[app.counter] = rq
+	response.headers["Location"] = "/patient/" + str(app.counter)
+	response.status_code = status.HTTP_302_FOUND
 	app.counter += 1
-	return PatientDictResp(id=N, patient=rq.dict())
 
-@app.get("/patient/{pk}", response_model=PatientDictRq,)
-def get_patient_info(pk: int, session_token: str = Depends(check_session)):
+@app.get("/patient")
+def get_patients(response: Response, session_token: str = Depends(check_session)):
 	if session_token is None:
 		response.status_code = status.HTTP_401_UNAUTHORIZED
 		return "Log in to access."
-	if pk <= app.counter:
-		return app.patients[pk-1]
+	return app.patients
+
+@app.get("/patient/{id}")
+def get_patient(id: int, response: Response, session_token: str = Depends(check_session)):
+	if session_token is None:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return "Log in to access."
+	if id in app.patients.keys():
+		return app.patients[id]
 	else:
-		return JSONResponse(status_code=204, content={})
+		response.status_code = status.HTTP_204_NO_CONTENT
+
+@app.delete("/patient/{id}")
+def delete_patient(id: int, response: Response, session_token: str = Depends(check_session)):
+	if session_token is None:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return "Log in to access."
+	app.patients.pop(id)
