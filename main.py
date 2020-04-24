@@ -110,3 +110,4 @@ def delete_patient(id: int, response: Response, session_token: str = Depends(che
 		response.status_code = status.HTTP_401_UNAUTHORIZED
 		return "Log in to access."
 	app.patients.pop(id)
+	response.status_code = status.HTTP_204_NO_CONTENT

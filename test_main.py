@@ -76,6 +76,7 @@ def test_delete_patients():
     client.post("/login", headers={"Authorization": f"Basic {credentials}"})
 
     response = client.delete("/patient/0")
+    assert response.status_code == 204
     response = client.get("/patient/0")
     assert response.status_code == 204
 
